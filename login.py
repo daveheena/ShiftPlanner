@@ -40,7 +40,10 @@ def userAuthentication():
 			session.save()
 			return manager.managerHome(session)
 		elif(row[2] == "STU"):
-			return "<p>Login Successful</p>"			
+			session = bottle.request.environ.get('beaker.session')
+			session['sp_user'] = row[0]
+			session.save()
+			return manager.managerHome(session)
 		else:
 			return "<p>Login Unsuccessful</p>"
 	
