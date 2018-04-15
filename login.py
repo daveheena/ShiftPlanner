@@ -1,7 +1,7 @@
 import sqlite3 
 import manager
 import bottle
-from bottle import route, run, template, request, debug
+from bottle import route, run, template, request, debug, static_file, get
 from beaker.middleware import SessionMiddleware
 
 session_opts = {
@@ -11,6 +11,10 @@ session_opts = {
     'session.auto': True
 }
 app = SessionMiddleware(bottle.app(), session_opts)
+
+@get('/<filename:re:.*\.*>')
+def server_static(filename):
+    return static_file(filename, root='./static/')
 
 @route("/")
 @route("/login",method="GET")
