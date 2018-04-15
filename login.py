@@ -20,7 +20,6 @@ def server_static(filename):
 @route("/login",method="GET")
 def login():
 	session = bottle.request.environ.get('beaker.session')
-	print(session.get('sp_user'))
 	if(session.get('sp_user') == "" or session.get('sp_user') == None):
 		return template('login',rows=())
 	else:
@@ -36,9 +35,9 @@ def userAuthentication():
 	result = cursor.fetchall()
 	cursor.close()
 	for row in result:
-		if(row[2] == "MGR"):
+		if(row[2] == "ADM"):
 			return "<p>Login Successful</p>"
-		elif(row[2] == "ADM"):
+		elif(row[2] == "MGR"):
 			session = bottle.request.environ.get('beaker.session')
 			session['sp_user'] = row[0]
 			session.save()

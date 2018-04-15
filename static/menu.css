@@ -45,10 +45,11 @@
 		}
 		.hidden{
 			font-size:12px;
+			background: #2f3036;
 		}
 		/*Hover state for top level links*/
 		li:hover a {
-			background: #2f3036;
+			background: #900C3F;
 		}
 		/*Style for dropdown links*/
 		li:hover ul a {
@@ -59,7 +60,7 @@
 		}
 		/*Hover state for dropdown links*/
 		li:hover ul a:hover {
-			background: #2f3036;
+			background: #900C3F;
 			color: #fff;
 		}
 		/*Hide dropdown links until they are needed*/
