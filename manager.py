@@ -10,6 +10,12 @@ managerSession = ""
 def server_static(filename):
     return static_file(filename, root='./static/')
 
+@route('/logout')
+def logout():
+	session = bottle.request.environ.get('beaker.session')
+	session['sp_user']=''
+	return redirect('/')
+
 def getSession():
 	session = bottle.request.environ.get('beaker.session')
 	if(session!=""):
@@ -20,7 +26,7 @@ def getSession():
 def managerHome(session):
 	checkSession()
 	loggedinUser = getSession()
-	return template('managerHome',values=[loggedinUser],menu=[""],dininglocation={})
+	return template('managerHome',values=[loggedinUser],menu=[""],dininglocation={},shifts=[],students={},studentsassigned={})
 
 def checkSession():
 	session = bottle.request.environ.get('beaker.session')
@@ -35,13 +41,15 @@ def addshifts():
 	loggedinUser = getSession()
 	connection = sqlite3.connect('ShiftPlanner.db')
 	cursor = connection.cursor()
-	cursor.execute('SELECT LocationID, Name FROM DiningLocation')
+	cursor.execute('SELECT UserID FROM UserInformation WHERE Email = "%s"'%loggedinUser)
+	result = cursor.fetchone()
+	cursor.execute('SELECT LocationID, Name FROM DiningLocation JOIN UserDiningLocation WHERE LocationID=DiningLocationID AND UserID=?',(result))
 	result = cursor.fetchall()
 	cursor.close()
 	diningdetails = {}
 	for row in result:
 		diningdetails[row[0]] = row[1]
-	return template('managerHome',values=[loggedinUser],menu=["addshifts"],dininglocation=diningdetails)
+	return template('managerHome',values=[loggedinUser],menu=["addshifts"],dininglocation=diningdetails,shifts=[],students={},studentsassigned={})
 
 @route("/addshifts",method="POST")
 def addshifts_todb():
@@ -73,10 +81,76 @@ def addshifts_todb():
 		inserted = -1
 		
 	cursor = connection.cursor()
-	cursor.execute('SELECT LocationID, Name FROM DiningLocation')
+	cursor.execute('SELECT UserID FROM UserInformation WHERE Email = "%s"'%loggedinUser)
+	result = cursor.fetchone()	
+	cursor.execute('SELECT LocationID, Name FROM DiningLocation JOIN UserDiningLocation WHERE LocationID=DiningLocationID AND UserID=?',(result))
 	result = cursor.fetchall()
 	cursor.close()
 	diningdetails = {}
 	for row in result:
 		diningdetails[row[0]] = row[1]
-	return template('managerHome',values=[loggedinUser,inserted],menu=["addshifts"],dininglocation=diningdetails)
+	return template('managerHome',values=[loggedinUser,inserted],menu=["addshifts"],dininglocation=diningdetails,shifts=[],students={},studentsassigned={})
+
+@route("/removeshifts",method="GET")
+def removeshifts():
+	checkSession()
+	loggedinUser = getSession()
+	connection = sqlite3.connect('ShiftPlanner.db')
+	cursor = connection.cursor()
+	cursor.execute('SELECT UserID FROM UserInformation WHERE Email = "%s"'%loggedinUser)
+	result = cursor.fetchone()	
+	cursor.execute('SELECT LocationID, Name FROM DiningLocation JOIN UserDiningLocation WHERE LocationID=DiningLocationID AND UserID=?',(result))
+	result = cursor.fetchall()
+	cursor.close()
+	diningdetails = {}
+	for row in result:
+		diningdetails[row[0]] = row[1]
+	return template('managerHome',values=[loggedinUser],menu=["removeshifts"],dininglocation=diningdetails,shifts=[],students={},studentsassigned={})
+	
+@route("/getshifts",method="POST")
+def getshifts_fromdb():
+	checkSession()
+	weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+	loggedinUser = getSession()
+	locationid = request.POST.get('removeShiftDiningLocation','').strip()
+	date = request.POST.get('removeShiftDate','').strip() + " 00:00:00"
+	
+	connection = sqlite3.connect('ShiftPlanner.db')
+	cursor = connection.cursor()
+	cursor.execute('SELECT UserID FROM UserInformation WHERE Email = "%s"'%loggedinUser)
+	result = cursor.fetchone()	
+	cursor.execute('SELECT LocationID, Name FROM DiningLocation JOIN UserDiningLocation WHERE LocationID=DiningLocationID AND UserID=?',(result))
+	result = cursor.fetchall()
+	diningdetails = {}
+	for row in result:
+		diningdetails[row[0]] = row[1]
+	cursor.execute('SELECT ID,LocationID,StartDate,EndDate,strftime("%H:%M",StartTime),strftime("%H:%M",EndTime),Day,TotalShifts FROM ShiftDetails WHERE IsActive=1 AND LocationID=? AND StartDate <= ? AND EndDate >= ? AND day=?',(int(locationid),date,date,weekdays[datetime.strptime(date,"%Y-%m-%d %H:%M:%S").weekday()]))
+	result = cursor.fetchall()
+	cursor.close()
+	print(result)
+	return template('managerHome',values=[loggedinUser],menu=["removeshifts"],dininglocation=diningdetails,shifts=result,students={},studentsassigned={})
+	
+@route("/retrieveStudents",method="POST")
+def getstudentsavailability_fromdb():
+	checkSession()
+	loggedinUser = getSession()
+	shiftid = request.POST.get('shiftid','').strip()
+	connection = sqlite3.connect('ShiftPlanner.db')
+	cursor = connection.cursor()
+	cursor.execute('SELECT * FROM ShiftDetails WHERE ID=%s'%int(shiftid))
+	result = cursor.fetchone()
+	cursor.execute('SELECT user.UserID, Name FROM UserInformation user JOIN UserLogin login ON user.Email = login.UserEmail JOIN UserNationality nationality ON user.UserID = nationality.UserID JOIN UserDiningLocation dining ON user.UserID = dining.UserID JOIN ShiftDetails shifts ON dining.DiningLocationID = shifts.LocationID JOIN StudentAvailability avail ON user.UserID = avail.StudentID JOIN StudentShifts studentshifts ON user.UserID = studentshifts.StudentID WHERE dining.DiningLocationID = ? AND login.UserType = "STU" AND avail.StartDate<=? AND avail.EndDate>=? AND avail.StartTime<=? AND avail.EndTime>=? AND avail.Day=? AND avail.IsActive=1 AND user.UserID NOT IN (SELECT StudentID FROM StudentShifts WHERE ShiftID = ?)',(int(result[1]),result[2],result[3],result[4],result[5],result[6],result[0]))
+	result = cursor.fetchall()
+	cursor.execute('SELECT UserID, Name FROM UserInformation user JOIN StudentShifts shifts WHERE user.UserID = shifts.StudentID AND shifts.ShiftID="%s" AND shifts.IsActive=1'%int(shiftid))
+	result2 = cursor.fetchall()
+	studentdetails = {}
+	for row in result:
+		for row2 in result2:
+			if row2[0] != row[0]:
+				studentdetails[row[0]] = row[1]
+	
+	studentsassigned = {}
+	for row in result2:
+		studentsassigned[row[0]] = row[1]
+
+	return template('managerHome',values=[loggedinUser],menu=["removeshifts"],dininglocation={},shifts=result,students=studentdetails,studentsassigned=studentsassigned)
