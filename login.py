@@ -1,5 +1,6 @@
 import sqlite3 
 import manager
+import student
 import bottle
 from bottle import route, run, template, request, debug, static_file, get
 from beaker.middleware import SessionMiddleware
@@ -46,7 +47,7 @@ def userAuthentication():
 			session = bottle.request.environ.get('beaker.session')
 			session['sp_user'] = row[0]
 			session.save()
-			return manager.managerHome(session)
+			return student.studentHome(session)
 		else:
 			return "<p>Login Unsuccessful</p>"
 	
