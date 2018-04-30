@@ -5,7 +5,56 @@
     <title>Shift Planner</title>
 	<link rel="stylesheet" type="text/css" href="../menu.css"/>
 	<link rel="stylesheet" type="text/css" href="../login.css"/>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 	<script type="text/javascript">
+		$(document).ready(function(){
+			$('#modalShiftsRetrieveStudents').click(function() {
+				var http = new XMLHttpRequest();
+				var params = "shiftid="+parseInt(document.getElementById("modalShiftID").innerHTML);
+				var url = "/retrieveStudents";
+				http.open("POST", url, true);
+
+				//Send the proper header information along with the request
+				http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+				http.onreadystatechange = function() {//Call a function when the state changes.
+					if(http.readyState == 4 && http.status == 200) {
+						alert(http.responsetext);						
+					}
+				}
+				http.send(params);
+			});
+		});
+		// When the user clicks the button, open the modal 
+		function shiftsModalDisplay(id,startdate,enddate,starttime,endtime,day,totalshifts) {
+			// Get the modal
+			var modal = document.getElementById('myModal');
+
+			// Get the <span> element that closes the modal
+			var span = document.getElementsByClassName("close")[0];
+			modal.style.display = "block";
+			
+			// When the user clicks on <span> (x), close the modal
+			span.onclick = function() {
+				modal.style.display = "none";
+			}
+
+			// When the user clicks anywhere outside of the modal, close it
+			window.onclick = function(event) {
+				if (event.target == modal) {
+					modal.style.display = "none";
+				}
+			}
+			
+			document.getElementById("modalShiftID").innerHTML = id;
+			document.getElementById("modalShiftStartDate").innerHTML = startdate;
+			document.getElementById("modalShiftEndDate").innerHTML = enddate;
+			document.getElementById("modalShiftStartTime").innerHTML = starttime;
+			document.getElementById("modalShiftEndTime").innerHTML = endtime;
+			document.getElementById("modalShiftDay").innerHTML = day;
+			document.getElementById("modalShiftTotalShifts").innerHTML = totalshifts;
+		}
+		
 		function showDiv(id){
 			id.style.display = "block";
 		}
@@ -78,6 +127,43 @@
 		  table{
 			border-collapse:collapse;
 		  }
+		  .modal {
+			display: none; /* Hidden by default */
+			position: fixed; /* Stay in place */
+			z-index: 1; /* Sit on top */
+			padding-top: 100px; /* Location of the box */
+			left: 0;
+			top: 0;
+			width: 100%; /* Full width */
+			height: 100%; /* Full height */
+			overflow: auto; /* Enable scroll if needed */
+			background-color: rgb(0,0,0); /* Fallback color */
+			background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+		}
+
+		/* Modal Content */
+		.modal-content {
+			background-color: #fefefe;
+			margin: auto;
+			padding: 20px;
+			border: 1px solid #888;
+			width: 80%;
+		}
+
+		/* The Close Button */
+		.close {
+			color: #aaaaaa;
+			float: right;
+			font-size: 28px;
+			font-weight: bold;
+		}
+
+		.close:hover,
+		.close:focus {
+			color: #000;
+			text-decoration: none;
+			cursor: pointer;
+		}
 	</style>
   </head>
   <body style="background-color:#F0F0F0;" onload="showDiv({{str(menu[0])}})">
@@ -176,7 +262,8 @@
 								%index3 = time.index(shift[5])
 								%if( index2 <=index and index3 >= index):
 									%if(index2==index):
-										<td style="background-color:cyan;border-top:2px solid;border-left:2px solid;border-right:2px solid;border-bottom:0px;max-width:20%;width:20%;">
+										<td style="background-color:cyan;border-top:2px solid;border-left:2px solid;border-right:2px solid;border-bottom:0px;max-width:20%;width:20%;cursor:pointer;" 
+										onclick="shiftsModalDisplay('{{shift[0]}}','{{shift[2]}}','{{shift[3]}}','{{shift[4]}}','{{shift[5]}}','{{shift[6]}}','{{shift[7]}}')">
 											Shift ID: {{shift[0]}}
 											<br/>
 											Shift Start Date: {{shift[2]}}
@@ -184,9 +271,9 @@
 											Shift End Date: {{shift[3]}}
 										</td>
 									%elif(index3==index):
-										<td style="background-color:cyan;border-bottom:2px solid;border-left:2px solid;border-right:2px solid;border-top:0px;max-width:20%;width:20%;"></td>
+										<td style="background-color:cyan;border-bottom:2px solid;border-left:2px solid;border-right:2px solid;border-top:0px;max-width:20%;width:20%;cursor:pointer;" onclick="shiftsModalDisplay('{{shift[0]}}','{{shift[2]}}','{{shift[3]}}','{{shift[4]}}','{{shift[5]}}','{{shift[6]}}','{{shift[7]}}')"></td>
 									%else:
-										<td style="background-color:cyan;border-left:2px solid;border-right:2px solid;border-top:0px;border-bottom:0px;max-width:20%;width:20%;"></td>
+										<td style="background-color:cyan;border-left:2px solid;border-right:2px solid;border-top:0px;border-bottom:0px;max-width:20%;width:20%;cursor:pointer;" onclick="shiftsModalDisplay('{{shift[0]}}','{{shift[2]}}','{{shift[3]}}','{{shift[4]}}','{{shift[5]}}','{{shift[6]}}','{{shift[7]}}')"></td>
 									%end
 								%else:
 									<td></td>
@@ -196,6 +283,30 @@
 					%end
 				</table>
 			</div>
+				<!-- The Modal for remove shifts -->
+				<div id="myModal" class="modal">
+				  <!-- Modal content -->
+				  <div class="modal-content">
+					<span id="shiftsModalClose" class="close">&times;</span><br/>
+					<b>Shift ID:</b> <label id="modalShiftID"></label><hr>
+					<b>Start Date:</b> <label id="modalShiftStartDate"></label><hr>
+					<b>End Date:</b> <label id="modalShiftEndDate"></label><hr>
+					<b>Start Time:</b> <label id="modalShiftStartTime"></label><hr>
+					<b>End Time:</b> <label id="modalShiftEndTime"></label><hr>
+					<b>Day:</b> <label id="modalShiftDay"></label><hr>
+					<b>Total Shifts:</b> <label id="modalShiftTotalShifts"></label><hr>
+					<select id="modalShiftStudentsAvailable">
+					</select>
+					<select id="modalShiftStudentsAssigned">
+					</select>
+					<hr>
+					<input type="button" id="modalShiftsRetrieveStudents" value="Retrieve Students"/>
+					<input type="button" id="modalShiftsRemoveShifts" value="Remove Shifts"/>
+					<input type="button" id="modalShiftsUpdateStudents" value="Assign/ Cancel Shifts"/>
+					<hr>
+					<input type="label" id="modalShiftsLabel"/>
+				  </div>
+				</div>
 		</div>
 	<div>
   </body>
