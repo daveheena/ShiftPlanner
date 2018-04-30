@@ -198,7 +198,49 @@
 			}
 			
 			return true;
-		}		
+		}	
+
+		function deleteStudent(email){
+			var http = new XMLHttpRequest();
+			var params = "email="+email;
+			var url = "/deletestudent";
+			http.open("POST", url, true);
+			//Send the proper header information along with the request
+			http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			http.onreadystatechange = function() {//Call a function when the state changes.
+				if(this.readyState == 4 && this.status == 200) {
+					window.location.reload(true);
+				}
+			}
+			http.send(params);
+		}
+		
+		function verifyAddStudentValues(){
+			var BannerId = document.getElementById("bannerId").value;
+			var Name = document.getElementById("studname").value;
+			var Email = document.getElementById("studEmail").value;
+			var ContactNumber = document.getElementById("contactnum").value;
+			var regex = /^[^@.,:\"\']*([a-z]+)([0-9]*)@kent.edu$/;
+			
+			if(BannerId=='' || Name==''  || ContactNumber=='' || Email.trim() == "" ) {
+				document.getElementById('errorLabel2').innerHTML = ' All the fields are Required';
+				return false;
+			}
+			else if(int(BannerId) != 9 ){
+				document.getElementById('errorLabel2').innerHTML = 'Banner ID must be 9 digits';
+				return false;
+			}
+			else if(!regex.test(Email)){
+				document.getElementById('errorLabel2').innerHTML = 'Email is not valid.';
+				return false;
+			}
+			
+			else if(int(ContactNumber) != 10){
+				document.getElementById('errorLabel2').innerHTML = 'Contact Number must be 10 digits';
+				return false;
+			}	
+			return true;
+		}
 	</script>
 	<style type="text/css">
 		input[type="date"]:before {
@@ -264,23 +306,23 @@
 					<li>
 						<a href="#">Student ￬</a>
 						<ul class="hidden">
-							<li><a href="#">Add Student</a></li>
-							<li><a href="#">Update Student</a></li>
-							<li><a href="#">Delete Student</a></li>
-							<li><a href="#">View Student</a></li>
+							<li><a href="/addstudent">Add Student</a></li>
+							<!--<li><a href="#">Update Student</a></li>-->
+							<!--<li><a href="#">Delete Student</a></li>-->
+							<li><a href="/viewalldata">View Student</a></li>
 						</ul>
 					</li>
 					<li>
 						<a href="#">Shifts ￬</a>
 						<ul class="hidden">
 							<li><a href="/addshifts">Add Shifts</a></li>
-							<li><a href="/removeshifts">Remove Shifts</a></li>
-							<li><a href="#">View Shifts</a></li>
+							<li><a href="/removeshifts">Shift Operations</a></li>
+							<!--<li><a href="#">View Shifts</a></li>
 							<li><a href="#">Assign Shifts</a></li>
-							<li><a href="#">Cancel Shifts</a></li>
+							<li><a href="#">Cancel Shifts</a></li>-->
 						</ul>
 					</li>
-					<li><a href="#">Generate Report</a></li>
+					<!--<li><a href="#">Generate Report</a></li>-->
 					<li><a href="/logout">Logout</a></li>
 				</ul>
 		</div>		
@@ -371,7 +413,6 @@
 						</tr>
 					%end
 				</table>
-			</div>				
 				<!-- The Modal for remove shifts -->
 				<div id="myModal" class="modal">
 				  <!-- Modal content -->
@@ -398,7 +439,55 @@
 					<span id="modalShiftsLabel" style="color:red;"></span>
 				  </div>
 				</div>
+			</div>
+			<div id="addstudent" class="form" style="display:none;">
+				<h2 style="padding-top:0;margin-top:0;">Add Student</h2>
+				<form action='/addstudent' method="POST" class="login-form" onsubmit="return verifyAddStudentValues();">
+				
+					<input type="number" id="bannerId" name="bannerId" placeholder="Enter Banner ID">
+					<input type="text" id="studname" name="studname" placeholder="Enter Name"/>
+					<input type="text" id="studEmail" name="studEmail" placeholder="Email"/>
+					<input type="number" id="contactnum" name="contactnum" placeholder="Contact Number"/>
+					<select id='usernationality' name='usernationality'>
+						<option value="-1"> Select Nationality </option>
+						<option value="DOM"> Domestic </option>
+						<option value="INT"> International </option>
+					</select>			
+					<input type="submit" id="addStudents" value="Add Student" />
+					<span id="errorLabel2" style="color:red"></span>
+					%for index,row in enumerate(values):
+						%if(index!=0 and row!=None):
+							%if(row==1):
+								<span id="label{{index}}" style="color:green">Student is added successfully.</span>
+							%else:
+								<span id="label{{index}}" style="color:red">Error occurred while adding student details.</span>
+							%end
+						%end
+					%end
+				</form>
+			</div>
+			<div id="viewalldata" style="max-width:50%;display:none;margin-left:auto;margin-right:auto;">
+				<h2 style="padding-top:0;margin-top:0;text-align:center;">Student Data</h2>
+				<table border=1 cellspacing=3 cellpadding=3 style="border-collapse:collapse;margin:auto;">
+					<tr>
+						<th> Banner ID </th>
+						<th> Student Name </th>
+						<th> Email </th>
+						<th> Contact Number </th> 
+						<th> Nationality </th>
+						<th></th>
+					</tr>
+						%for row in studentdetails:
+							<tr>        
+								%for col in row:
+									<td>{{col}}</td>               
+								%end
+								<td><input type="button" id="{{row[2]}}" onclick="deleteStudent(this.id)" value="Delete"/></td>
+							</tr>
+						%end
+				</table>
+			</div>
 		</div>
-	<div>
+	</div>
   </body>
 </html>

@@ -27,7 +27,7 @@ def getSession():
 def managerHome(session):
 	checkSession()
 	loggedinUser = getSession()
-	return template('managerHome',values=[loggedinUser],menu=[""],dininglocation={},shifts=[],students={},studentsassigned={})
+	return template('managerHome',values=[loggedinUser],menu=[""],dininglocation={},shifts=[],studentdetails=[])
 
 def checkSession():
 	session = bottle.request.environ.get('beaker.session')
@@ -50,7 +50,7 @@ def addshifts():
 	diningdetails = {}
 	for row in result:
 		diningdetails[row[0]] = row[1]
-	return template('managerHome',values=[loggedinUser],menu=["addshifts"],dininglocation=diningdetails,shifts=[],students={},studentsassigned={})
+	return template('managerHome',values=[loggedinUser],menu=["addshifts"],dininglocation=diningdetails,shifts=[],studentdetails=[])
 
 @route("/addshifts",method="POST")
 def addshifts_todb():
@@ -90,7 +90,7 @@ def addshifts_todb():
 	diningdetails = {}
 	for row in result:
 		diningdetails[row[0]] = row[1]
-	return template('managerHome',values=[loggedinUser,inserted],menu=["addshifts"],dininglocation=diningdetails,shifts=[],students={},studentsassigned={})
+	return template('managerHome',values=[loggedinUser,inserted],menu=["addshifts"],dininglocation=diningdetails,shifts=[],studentdetails=[])
 
 @route("/removeshifts",method="GET")
 def removeshifts():
@@ -106,7 +106,7 @@ def removeshifts():
 	diningdetails = {}
 	for row in result:
 		diningdetails[row[0]] = row[1]
-	return template('managerHome',values=[loggedinUser],menu=["removeshifts"],dininglocation=diningdetails,shifts=[],students={},studentsassigned={})
+	return template('managerHome',values=[loggedinUser],menu=["removeshifts"],dininglocation=diningdetails,shifts=[],studentdetails=[])
 	
 @route("/getshifts",method="POST")
 def getshifts_fromdb():
@@ -129,7 +129,7 @@ def getshifts_fromdb():
 	result = cursor.fetchall()
 	cursor.close()
 	print(result)
-	return template('managerHome',values=[loggedinUser],menu=["removeshifts"],dininglocation=diningdetails,shifts=result,students={},studentsassigned={})
+	return template('managerHome',values=[loggedinUser],menu=["removeshifts"],dininglocation=diningdetails,shifts=result,studentdetails=[])
 	
 @route("/retrieveStudents",method="POST")
 def getstudentsavailability_fromdb():
@@ -190,3 +190,77 @@ def removeshifts_fromdb():
 		print(err)
 		inserted = -1
 	return {'status':inserted}
+	
+@route('/addstudent', method="GET")
+def Add_Student():
+	checkSession()
+	loggedinUser = getSession()
+	connection = sqlite3.connect('ShiftPlanner.db')
+	cursor = connection.cursor()
+	cursor.execute('SELECT * FROM UserInformation')
+	result = cursor.fetchall()
+	cursor.close()	
+	return template('managerHome', values=[loggedinUser], menu=["addstudent"],dininglocation={},studentdetails=[],shifts=[])
+	
+
+@route('/addstudent', method='POST')
+def Add_Student_todb():
+	checkSession()
+	loggedinUser = getSession()
+	BannerId = request.POST.get('bannerId','').strip() 
+	Name = request.POST.get('studname','').strip()
+	Email = request.POST.get('studEmail','').strip()
+	ContactNumber = request.POST.get('contactnum','').strip()
+	Nationality = request.POST.get('usernationality','').strip()
+	connection = sqlite3.connect('ShiftPlanner.db')
+	inserted = 1
+
+	characters = string.ascii_letters  + string.digits
+	password = ""
+	for x in range(randint(6, 8)):
+		password += choice(characters)
+	print(password)
+
+	try:
+		connection.execute('INSERT INTO UserInformation(UserID,Name,Email,ContactNumber,CreatedDate) VALUES(?,?,?,?,?)',(int(BannerId),Name,Email,int(ContactNumber),datetime.now()))
+		connection.execute('INSERT INTO UserLogin(UserEmail,Password,UserType,IsActive,LastLogin) VALUES(?,?,?,?,?)',(Email,password,'STU',1,datetime.now()))
+		connection.execute('INSERT INTO UserNationality(UserID,NationalityType) VALUES(?,?)', (int(BannerId),Nationality))
+		connection.commit()
+	except Exception as err:
+		print(err)
+		inserted = -1 
+
+	cursor = connection.cursor()
+	cursor.execute('SELECT UserID FROM UserInformation WHERE Email = "%s"'%loggedinUser)
+	result = cursor.fetchone()	
+	cursor.execute('SELECT LocationID FROM DiningLocation JOIN UserDiningLocation WHERE LocationID=DiningLocationID AND UserID=?',(result))
+	result = cursor.fetchone()
+	connection.execute('INSERT INTO UserDiningLocation(UserID,DiningLocationID) VALUES(?,?)',(int(BannerId),int(result[0])))
+	connection.commit()
+	cursor.close()
+	return template('managerHome', values=[loggedinUser,inserted], menu=["addstudent"], dininglocation={},studentdetails=[],shifts=[])
+
+@route('/viewalldata', method="GET")
+def View_Student_Data():
+	checkSession()
+	loggedinUser = getSession()
+	connection = sqlite3.connect('ShiftPlanner.db')
+	cursor = connection.cursor()
+	cursor.execute('SELECT UserID FROM UserInformation WHERE Email = "%s"'%loggedinUser)
+	result = cursor.fetchone()	
+	cursor.execute('SELECT LocationID FROM DiningLocation JOIN UserDiningLocation WHERE LocationID=DiningLocationID AND UserID=?',(result))
+	result = cursor.fetchone()	
+	cursor.execute('SELECT user.UserID, user.Name, user.Email, user.ContactNumber, nationality.NationalityType FROM UserInformation user JOIN UserDiningLocation location JOIN UserLogin login JOIN UserNationality nationality WHERE user.UserID = location.UserID AND user.Email = login.UserEmail AND user.UserID = nationality.UserID AND login.UserType = "STU" AND login.IsActive=1  AND location.DiningLocationID="%s"'%int(result[0]))
+	result = cursor.fetchall()
+	cursor.close()	
+	return template('managerHome', values=[loggedinUser], menu=["viewalldata"], dininglocation={}, studentdetails=result,shifts=[])
+
+@route("/deletestudent" , method="POST")
+def Delete_Student_Data():
+	checkSession()
+	loggedinUser = getSession()
+	email = request.POST.get('email','').strip() 
+	connection = sqlite3.connect('ShiftPlanner.db')
+	connection.execute('UPDATE UserLogin SET IsActive=0 WHERE UserEmail="%s"'%email)
+	connection.commit()
+	return {'status':1}
