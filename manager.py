@@ -3,6 +3,8 @@ import bottle_session
 import bottle
 from datetime import time, datetime, date
 from bottle import route, run, template, request, static_file, get, redirect
+import string
+from random import *
 
 managerSession = ""
 

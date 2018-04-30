@@ -7,7 +7,7 @@
 	<link rel="stylesheet" type="text/css" href="../login.css"/>
 	<script type="text/javascript">
 		function showDiv(id){
-			alert(id);
+			<!--alert(id); -->
 			id.style.display = "block";
 			
 		}
@@ -120,22 +120,22 @@
 				<ul id="menu">
 					<li>
 						<a href="#"> Availability ￬</a>
-						<ul class="hidden"
+						<ul class="hidden">
 							<li><a href="/addavailability">Add Availability</a></li>
 							<li><a href="/updateavailability">Update Availability</a></li>
-							<li><a href="#">Delete Availability</a></li>
+							<!-- <li><a href="#">Delete Availability</a></li> -->
 							<li><a href="/viewavailability">View Availability</a></li>
 						</ul>
 					</li>
-					<li>
+					<!--<li>
 						<a href="#">Available Shifts ￬</a>
 						<ul class="hidden">
 							<li><a href="#">View Shifts</a></li>
 							<li><a href="#">Take Shifts</a></li>
 						</ul>
-					</li>
-					<li><a href="#">Cancel Shifts</a></li>
-                    <li><a href="/logout">Logout</a></li>
+					</li> -->
+					<!--<li><a href="#">Cancel Shifts</a></li> -->
+					<li><a href="/logout">Logout</a></li>
 				</ul>
 		</div>		
 		
