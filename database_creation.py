@@ -12,9 +12,8 @@ connection.execute('CREATE TABLE ShiftDetails (ID INTEGER PRIMARY KEY AUTOINCREM
 connection.execute('CREATE TABLE StudentShifts (ID INTEGER PRIMARY KEY AUTOINCREMENT, ShiftID INTEGER, StudentID INTEGER(9), AddedDate Date NOT NULL, IsActive INTEGER(1) NOT NULL, FOREIGN KEY (ShiftID) REFERENCES ShiftDetails(ID), FOREIGN KEY (StudentID) REFERENCES UserInformation(UserID))')
 
 connection.execute('INSERT INTO UserInformation VALUES(810917421,"Heena Dave","hdave@kent.edu",3302948223,datetime("now"))')
-connection.execute('INSERT INTO UserLogin VALUES("hdave@kent.edu","Admin123","MGR",1,datetime("now"))')
+connection.execute('INSERT INTO UserLogin VALUES("hdave@kent.edu","Admin123","ADM",1,datetime("now"))')
 connection.execute('INSERT INTO DiningLocation(Name,Address,City,State,Zipcode,ContactNumber,IsActive) VALUES("Kent Market 1","Student Center","Kent","OH",44240,3301110011,1)')
-connection.execute('INSERT INTO DiningLocation(Name,Address,City,State,Zipcode,ContactNumber,IsActive) VALUES("Kent Market 2","Student Center","Kent","OH",44240,3301110012,1)')
 connection.execute('INSERT INTO UserDiningLocation VALUES(810917421,(SELECT LocationID FROM DiningLocation WHERE Name="Kent Market 1"))')
 
 connection.commit()
