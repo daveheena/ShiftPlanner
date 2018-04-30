@@ -87,7 +87,7 @@
 					<a href="#">Dining Locations ￬</a>
 					<ul class="hidden">
 						<li><a href="/addLocation">Add Location</a></li>
-						<li><a href="#">Update Location</a></li>
+						<!--<li><a href="#">Update Location</a></li>-->
 						<li><a href="/viewLocations">View Location</a></li>
 					</ul>
 				</li>
@@ -95,11 +95,10 @@
 					<a href="#">Managers ￬</a>
 					<ul class="hidden">
 						<li><a href="/addManager">Add Manager</a></li> 
-						<li><a href="#">Update Managers</a></li>
-						<li><a href="#">View Managers</a></li>
+						<!--<li><a href="#">Update Managers</a></li>-->
+						<!--<li><a href="#">View Managers</a></li>-->
 					</ul>
 				</li>
-				<li><a href="#">Generate Report</a></li>
 				<li><a href="/logout">Logout</a></li>
 			</ul>
 	</div>
@@ -118,7 +117,7 @@
 				%for index, row in enumerate(values):
 					%if(index!=0 and row!=None):
 						%if(row==1):
-							<span id="label{{index}}" style="color:green">Shift details are entered successfully.</span>
+							<span id="label{{index}}" style="color:green">Dining Location details are entered successfully.</span>
 						%else:
 							<span id="label{{index}}" style="color:red">Error occurred while adding Dining Location.</span>
 						%end

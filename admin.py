@@ -58,11 +58,7 @@ def addmanager():
 	loggedinUser = getSession()
 	connection = sqlite3.connect('ShiftPlanner.db')
 	cursor = connection.cursor()
-	cursor.execute('SELECT * FROM UserInformation')
-	result = cursor.fetchall()
-	cursor.execute('SELECT * FROM UserLogin')
-	result = cursor.fetchall()
-	cursor.execute('SELECT * FROM UserDiningLocation')
+	cursor.execute('SELECT * FROM DiningLocation')
 	result = cursor.fetchall()
 	cursor.close()
 	managerdetails = {}
@@ -129,14 +125,14 @@ def addLocation_todb():
 	state = request.POST.get('state','').strip()
 	zipcode = request.POST.get('zipcode','').strip()
 	contactnumber = request.POST.get('contactNumber','').strip()
-	isactive = 1
 	
 	connection = sqlite3.connect('ShiftPlanner.db')
 	inserted = 1
 	try:
-		connection.execute('INSERT INTO DiningLocations(Name, Address, City, State, Zipcode, ContactNumber, IsActive) VALUE(?,?,?,?,?,?,?)', diningname, address, city, state, (int(zipcode)), (int(contactnumber)), (int(isactive)))
+		connection.execute('INSERT INTO DiningLocation(Name, Address, City, State, Zipcode, ContactNumber, IsActive) VALUES(?,?,?,?,?,?,?)', (diningname, address, city, state, (int(zipcode)), (int(contactnumber)), 1))
 		connection.commit()
 	except Exception as err:
+		print(err)
 		inserted = -1
 
 	cursor = connection.cursor()
