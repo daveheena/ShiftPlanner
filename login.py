@@ -1,6 +1,7 @@
 import sqlite3 
 import manager
 import student
+import admin
 import bottle
 from bottle import route, run, template, request, debug, static_file, get
 from beaker.middleware import SessionMiddleware
@@ -23,8 +24,12 @@ def login():
 	session = bottle.request.environ.get('beaker.session')
 	if(session.get('sp_user') == "" or session.get('sp_user') == None):
 		return template('login',rows=())
-	else:
+	elif(session.get('usertype') == "ADM"):
+		return admin.adminHome(session)
+	elif(session.get('usertype') == "MGR"):
 		return manager.managerHome(session)
+	elif(session.get('usertype') == "STU"):
+		return student.studentHome(session)
 
 @route("/login",method="POST")
 def userAuthentication():
@@ -37,15 +42,21 @@ def userAuthentication():
 	cursor.close()
 	for row in result:
 		if(row[2] == "ADM"):
-			return "<p>Login Successful</p>"
+			session = bottle.request.environ.get('beaker.session')
+			session['sp_user'] = row[0]
+			session['usertype'] = "ADM"
+			session.save()
+			return admin.adminHome(session)
 		elif(row[2] == "MGR"):
 			session = bottle.request.environ.get('beaker.session')
 			session['sp_user'] = row[0]
+			session['usertype'] = "MGR"
 			session.save()
 			return manager.managerHome(session)
 		elif(row[2] == "STU"):
 			session = bottle.request.environ.get('beaker.session')
 			session['sp_user'] = row[0]
+			session['usertype'] = "STU"
 			session.save()
 			return student.studentHome(session)
 		else:

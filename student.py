@@ -10,6 +10,13 @@ studentSession = ""
 def server_static(filename):
     return static_file(filename, root='./static/')
 
+@route('/logout')
+def logout():
+	session = bottle.request.environ.get('beaker.session')
+	session['sp_user']=''
+	session['usertype']=''
+	return redirect('/')
+
 def getSession():
 	session = bottle.request.environ.get('beaker.session')
 	if(session!=""):
@@ -24,7 +31,7 @@ def studentHome(session):
 	
 def checkSession():
 	session = bottle.request.environ.get('beaker.session')
-	if(session.get('sp_user') == "" or session.get('sp_user') == None):
+	if(session.get('sp_user') == "" or session.get('sp_user') == None or session.get('usertype')!="STU"):
 		return redirect("/")
 	else:
 		return ""
