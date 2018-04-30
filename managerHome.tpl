@@ -18,13 +18,102 @@
 				http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
 				http.onreadystatechange = function() {//Call a function when the state changes.
-					if(http.readyState == 4 && http.status == 200) {
-						alert(http.responsetext);						
+					if(this.readyState == 4 && this.status == 200) {
+						var response = jQuery.parseJSON(this.responseText);
+						document.getElementById('modalShiftStudentsAvailable').innerHTML = response.studentsavailable;
+						document.getElementById('modalShiftStudentsAssigned').innerHTML = response.studentsassigned;
 					}
 				}
 				http.send(params);
 			});
 		});
+		
+		function viewShiftsRemoveStudent(){
+			var option = document.getElementById('modalShiftStudentsAssigned');
+			var id = option.value;
+			var name = option.options[option.selectedIndex].innerHTML;
+			
+			var assignedOption = document.createElement("option");
+			assignedOption.text = name;
+			assignedOption.value = id;
+			document.getElementById('modalShiftStudentsAvailable').appendChild(assignedOption);
+			document.getElementById('modalShiftStudentsAssigned').remove(assignedOption);
+		}
+		
+		function viewShiftsAddStudent(){
+			var option = document.getElementById('modalShiftStudentsAvailable');
+			var id = option.value;
+			var name = option.options[option.selectedIndex].innerHTML;
+			
+			var assignedOption = document.createElement("option");
+			assignedOption.text = name;
+			assignedOption.value = id;
+			document.getElementById('modalShiftStudentsAssigned').appendChild(assignedOption);
+			document.getElementById('modalShiftStudentsAvailable').remove(assignedOption);
+		}
+		
+		function removeShift(){
+			var shiftid = document.getElementById("modalShiftID").innerHTML;
+			var http = new XMLHttpRequest();
+			var params = "shiftid="+shiftid;
+			var url = "/removeShifts";
+			http.open("POST", url, true);
+
+			//Send the proper header information along with the request
+			http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+			http.onreadystatechange = function() {//Call a function when the state changes.
+				if(this.readyState == 4 && this.status == 200) {
+					var response = jQuery.parseJSON(this.responseText);
+					if(response.status==1){
+						document.getElementById("modalShiftsLabel").innerHTML = "Shift removed successfully.";
+						document.getElementById("modalShiftsLabel").style.color="green";
+						window.location.reload(true);
+					}
+					else{
+						document.getElementById("modalShiftsLabel").innerHTML = "Error occurred.";
+					}
+				}
+			}
+			http.send(params);
+		}
+		
+		function updateStudentsForShift(){
+			var shiftid = document.getElementById("modalShiftID").innerHTML;
+			var students = [];
+			var select = document.getElementById("modalShiftStudentsAssigned");
+			var totalshifts = document.getElementById("modalShiftTotalShifts").innerHTML;
+			if(select.options.length > parseInt(totalshifts)){
+				document.getElementById("modalShiftsLabel").innerHTML = "Number of Students exceed total shifts.";
+				return false;
+			}
+			for(i=0; i< select.options.length;i++){
+				students.push(select.options[i].value);
+			}
+			
+			var http = new XMLHttpRequest();
+			var params = "shiftid="+shiftid+"&students="+students;
+			var url = "/updateStudentsForShift";
+			http.open("POST", url, true);
+
+			//Send the proper header information along with the request
+			http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+			http.onreadystatechange = function() {//Call a function when the state changes.
+				if(this.readyState == 4 && this.status == 200) {
+					var response = jQuery.parseJSON(this.responseText);
+					if(response.status==1){
+						document.getElementById("modalShiftsLabel").innerHTML = "Students updated successfully.";
+						document.getElementById("modalShiftsLabel").style.color="green";
+					}
+					else{
+						document.getElementById("modalShiftsLabel").innerHTML = "Error occurred.";
+					}
+				}
+			}
+			http.send(params);
+		}
+		
 		// When the user clicks the button, open the modal 
 		function shiftsModalDisplay(id,startdate,enddate,starttime,endtime,day,totalshifts) {
 			// Get the modal
@@ -282,11 +371,11 @@
 						</tr>
 					%end
 				</table>
-			</div>
+			</div>				
 				<!-- The Modal for remove shifts -->
 				<div id="myModal" class="modal">
 				  <!-- Modal content -->
-				  <div class="modal-content">
+				  <div class="modal-content" style="max-width:500px;">
 					<span id="shiftsModalClose" class="close">&times;</span><br/>
 					<b>Shift ID:</b> <label id="modalShiftID"></label><hr>
 					<b>Start Date:</b> <label id="modalShiftStartDate"></label><hr>
@@ -295,16 +384,18 @@
 					<b>End Time:</b> <label id="modalShiftEndTime"></label><hr>
 					<b>Day:</b> <label id="modalShiftDay"></label><hr>
 					<b>Total Shifts:</b> <label id="modalShiftTotalShifts"></label><hr>
-					<select id="modalShiftStudentsAvailable">
-					</select>
-					<select id="modalShiftStudentsAssigned">
-					</select>
+					<b>Students Available:</b> <select id="modalShiftStudentsAvailable" style="box-sizing:border-box;min-width:200px;">
+					</select><input type="button" onclick="viewShiftsAddStudent()" value="Add"/>
+					<hr>
+					<b>Students Assigned:</b> 
+					<select id="modalShiftStudentsAssigned" style="box-sizing:border-box;min-width:200px;">
+					</select><input type="button" onclick="viewShiftsRemoveStudent()" value="Remove"/>
 					<hr>
 					<input type="button" id="modalShiftsRetrieveStudents" value="Retrieve Students"/>
-					<input type="button" id="modalShiftsRemoveShifts" value="Remove Shifts"/>
-					<input type="button" id="modalShiftsUpdateStudents" value="Assign/ Cancel Shifts"/>
+					<input type="button" id="modalShiftsRemoveShifts" onclick="removeShift()" value="Remove Shifts"/>
+					<input type="button" id="modalShiftsUpdateStudents"  onclick="updateStudentsForShift()" value="Update Students for Shift"/>
 					<hr>
-					<input type="label" id="modalShiftsLabel"/>
+					<span id="modalShiftsLabel" style="color:red;"></span>
 				  </div>
 				</div>
 		</div>
